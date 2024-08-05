@@ -19,8 +19,13 @@ void enc()
 
 void pidCall()
 {
+  if (abs(prev_contrl_signl) >= HomeSpeed && abs(Motor1.getCurPulse() - prev_pos) <= 20)
+  {
+    errState = true;
+    armed = false;
+  }
 
-  if (armed)
+  if (armed && !errState)
   {
     contrl_signl = Motor1.PID_pos_control(setpoint, TIMER1_INTERVAL_MS / 1000.0f);
 
@@ -38,6 +43,8 @@ void pidCall()
       analogWrite(Motor_Dir, 0);
     }
   }
+  prev_contrl_signl = contrl_signl;
+  prev_pos = Motor1.getCurPulse();
 }
 
 void sendSensorSignal()
@@ -259,6 +266,15 @@ void getMinSpeed()
 
 void loop()
 {
+  if (errState)
+  {
+    while (!digitalRead(Home_Offset_Mode) || !digitalRead(Open_Offset_Mode) || !digitalRead(OffsetConfirm))
+    {
+      Serial.println("Error");
+    }
+    errState = false;
+    isHome = false;
+  }
   if (!isHome)
   {
     homeMode();
@@ -277,12 +293,14 @@ void loop()
   // ----------Home Offset Mode ----------
   if (!digitalRead(Home_Offset_Mode))
   {
+    Serial.println("Home_Offset");
     offset("Home");
   }
 
   // ----------Open Offset Mode ----------
   if (!digitalRead(Open_Offset_Mode))
   {
+    Serial.println("Open_Offset");
     offset("Open");
   }
 

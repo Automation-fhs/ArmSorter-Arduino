@@ -55,7 +55,7 @@ int cur_P = 0;
 // ----- Motor -----
 // float PID[3] = {0.6, 0.2, 0.26};
 float PID[3] = {27, 8, 4.5};
-//float PID[3] = {34.2, 20, 8.55};
+// float PID[3] = {34.2, 20, 8.55};
 
 float pidFreq = TIMER1_FREQUENCY;
 float setpoint = 0;
@@ -69,9 +69,12 @@ float prev_setpoint;
 bool prev_Home;
 bool armed = false;
 int contrl_signl;
+int prev_contrl_signl;
+float prev_pos;
 bool isHome = false;
 bool sensorSgnlSent = false;
 bool useSensor = false;
+bool errState = false;
 
 bool err = false;
 int led = 0;
