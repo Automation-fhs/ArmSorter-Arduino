@@ -43,7 +43,7 @@
 #define Motor_Voltage 12
 #define Enc_PPP 1000
 #define PkgSensor 18
-#define CallibHome 350
+#define CallibHome 320
 
 MotorControl Motor1 = MotorControl(Motor_Voltage, Enc_PPP);
 
@@ -54,7 +54,7 @@ int cur_P = 0;
 
 // ----- Motor -----
 // float PID[3] = {0.6, 0.2, 0.26};
-float PID[3] = {27, 8, 4.5};
+float PID[3] = {18, 5, 6};
 // float PID[3] = {34.2, 20, 8.55};
 
 float pidFreq = TIMER1_FREQUENCY;

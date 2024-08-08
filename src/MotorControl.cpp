@@ -108,7 +108,7 @@ int MotorControl::PID_pos_control(float setpoint, float timespan, String unit)
         _setpoint = setpoint;
     float err = _setpoint - getCurRad();
 
-    if (abs(err) >= 0.003)
+    if (abs(err) >= 0.03)
         _integralTimer = millis();
     if (millis() - _integralTimer >= 1000)
         this->resetIntegral();
@@ -123,16 +123,16 @@ int MotorControl::PID_pos_control(float setpoint, float timespan, String unit)
     float Pout = _PID[0] * err;
     float Iout = _PID[1] * _integral;
     float Dout = _PID[2] * (err - this->_prev_err) / timespan;
-    // Serial.print(setpoint);
-    // Serial.print(" ");
-    // // Serial.print("P:");
-    // Serial.print(Pout);
-    // // Serial.print("I:");
-    // Serial.print(" ");
-    // Serial.print(Iout);
-    // Serial.print(" ");
-    // // Serial.print("D:");
-    // Serial.println(Dout);
+    Serial.print(setpoint);
+    Serial.print(" ");
+    Serial.print("P:");
+    Serial.print(Pout);
+    Serial.print(" ");
+    Serial.print("I:");
+    Serial.print(Iout);
+    Serial.print(" ");
+    Serial.print("D:");
+    Serial.println(Dout);
 
     this->_prev_err = err;
     // Serial.println(millis() - timer);
