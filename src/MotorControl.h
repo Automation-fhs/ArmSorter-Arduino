@@ -19,6 +19,7 @@ public:
     // -----PID-----
     void set_PID(float PID[3]);
     int PID_pos_control(float setpoint, float timespan, String unit = "Deg");
+    int Fuzzy_pos_control();
 
 private:
     // ----- Motor -----

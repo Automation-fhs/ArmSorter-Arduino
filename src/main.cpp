@@ -33,10 +33,12 @@ void pidCall()
     // contrl_signl = (contrl_signl + 255) / 2;
     // analogWrite(Motor_PWM, contrl_signl);
     float curDeg = Motor1.getCurDeg();
-    if(curDeg >= openDeg + 15){
+    if (curDeg >= openDeg + 15)
+    {
       contrl_signl = -HomeSpeed;
     }
-    if(curDeg <= homeDeg - 15) {
+    if (curDeg <= homeDeg - 15)
+    {
       contrl_signl = HomeSpeed;
     }
     // if(curDeg <= 7 && contrl_signl <= -HomeSpeed) {
@@ -54,17 +56,16 @@ void pidCall()
       analogWrite(Motor_PWM, -contrl_signl);
       analogWrite(Motor_Dir, 0);
     }
-  // Serial.print("Set point:");
-  // Serial.print(setpoint);
-  // Serial.print(" | Control Signal:");
-  // Serial.print(contrl_signl);
-  // Serial.print(" | Current Degree");
-  // Serial.println(Motor1.getCurDeg());
+    // Serial.print("Set point:");
+    // Serial.print(setpoint);
+    // Serial.print(" | Control Signal:");
+    // Serial.print(contrl_signl);
+    // Serial.print(" | Current Degree");
+    // Serial.println(Motor1.getCurDeg());
   }
-  
+
   prev_contrl_signl = contrl_signl;
   prev_pos = Motor1.getCurPulse();
-  
 }
 
 void sendSensorSignal()
@@ -144,8 +145,8 @@ void setup()
   EEPROM.write(8, 0);
   EEPROM.write(9, 0);
 
-  //homeDeg = 2 * ((float)EEPROM.read(0) - 0.5) * (EEPROM.read(1) * 10 + EEPROM.read(2) + ((float)EEPROM.read(3)) / 10 + ((float)EEPROM.read(4)) / 100);
-  //openDeg = 2 * ((float)EEPROM.read(5) - 0.5) * (EEPROM.read(6) * 10 + EEPROM.read(7) + ((float)EEPROM.read(8)) / 10 + ((float)EEPROM.read(9)) / 100);
+  // homeDeg = 2 * ((float)EEPROM.read(0) - 0.5) * (EEPROM.read(1) * 10 + EEPROM.read(2) + ((float)EEPROM.read(3)) / 10 + ((float)EEPROM.read(4)) / 100);
+  // openDeg = 2 * ((float)EEPROM.read(5) - 0.5) * (EEPROM.read(6) * 10 + EEPROM.read(7) + ((float)EEPROM.read(8)) / 10 + ((float)EEPROM.read(9)) / 100);
   homeDeg = 0;
   openDeg = 35;
   // homeDeg = 0;
@@ -299,7 +300,7 @@ void loop()
   // }
   if (!isHome)
   {
-    
+
     homeMode();
     Serial.println("Home found!");
     isHome = true;
@@ -308,12 +309,12 @@ void loop()
     prev_Home = digitalRead(Home_Sensor);
     prev_setpoint = setpoint;
   }
-  //Serial.println(Motor1.getCurDeg());
-  // // ---------- Test Mode ----------
-  // if (digitalRead(Test_Mode))
-  // {
-  //   testMode();
-  // }
+  // Serial.println(Motor1.getCurDeg());
+  //  // ---------- Test Mode ----------
+  //  if (digitalRead(Test_Mode))
+  //  {
+  //    testMode();
+  //  }
 
   // ----------Home Offset Mode ----------
   if (!digitalRead(Home_Offset_Mode))
