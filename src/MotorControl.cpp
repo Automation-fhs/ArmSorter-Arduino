@@ -85,6 +85,8 @@ float MotorControl::getCurDeg()
         int absPulse = (this->_cur_pulse + 2 * this->enc_pulse_per_phase) % (4 * this->enc_pulse_per_phase);
         return absPulse * (1 - 2 * 1000 / (float)abs(absPulse)) * 360 / (4 * 1000);
     }
+    else
+        return 0;
 }
 
 float MotorControl::getCurRad()
@@ -99,7 +101,7 @@ void MotorControl::resetIntegral()
 
 int MotorControl::PID_pos_control(float setpoint, float timespan, String unit)
 {
-    uint32_t timer = millis();
+    // uint32_t timer = millis();
     float _setpoint;
     bool resetVelo = false;
 
