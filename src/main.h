@@ -56,6 +56,19 @@ int cur_P = 0;
 // float PID[3] = {0.6, 0.2, 0.26};
 float PID[3] = {18, 5, 6};
 // float PID[3] = {34.2, 20, 8.55};
+float posCP[] = {-35, -30, -5, 0, 5, 30, 35};
+float veloCP[] = {-200, -100, -20, 0, 20, 100, 200};
+float PWMVal[] = {255, 255, 200, 150, 100, 50, 0};
+float posErr = 1;
+float veloErr = 10;
+float FuzzyRules[7][7] = {
+    {PWMVal[0], PWMVal[1], PWMVal[2], PWMVal[3], PWMVal[4], PWMVal[5], PWMVal[6]},
+    {PWMVal[1], PWMVal[2], PWMVal[3], PWMVal[4], PWMVal[5], PWMVal[6], -PWMVal[5]},
+    {PWMVal[2], PWMVal[3], PWMVal[4], PWMVal[5], PWMVal[6], -PWMVal[5], -PWMVal[4]},
+    {PWMVal[3], PWMVal[4], PWMVal[5], PWMVal[6], -PWMVal[5], -PWMVal[4], -PWMVal[3]},
+    {PWMVal[4], PWMVal[5], PWMVal[6], -PWMVal[5], -PWMVal[4], -PWMVal[3], -PWMVal[2]},
+    {PWMVal[5], PWMVal[6], -PWMVal[5], -PWMVal[4], -PWMVal[3], -PWMVal[2], -PWMVal[1]},
+    {PWMVal[6], -PWMVal[5], -PWMVal[4], -PWMVal[3], -PWMVal[2], -PWMVal[1], -PWMVal[0]}};
 
 float pidFreq = TIMER1_FREQUENCY;
 float setpoint = 0;

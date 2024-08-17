@@ -64,8 +64,49 @@ void pidCall()
     // Serial.println(Motor1.getCurDeg());
   }
 
-  prev_contrl_signl = contrl_signl;
-  prev_pos = Motor1.getCurPulse();
+  // prev_contrl_signl = contrl_signl;
+  // prev_pos = Motor1.getCurPulse();
+}
+
+void FuzzyCall()
+{
+  if (armed && !errState)
+  {
+    contrl_signl = Motor1.Fuzzy_pos_control(setpoint, TIMER1_INTERVAL_MS / 1000.0f);
+
+    // contrl_signl = (contrl_signl + 255) / 2;
+    // analogWrite(Motor_PWM, contrl_signl);
+    float curDeg = Motor1.getCurDeg();
+    if (curDeg >= openDeg + 10)
+    {
+      contrl_signl = -HomeSpeed;
+    }
+    if (curDeg <= homeDeg - 10)
+    {
+      contrl_signl = HomeSpeed;
+    }
+    // if(curDeg <= 7 && contrl_signl <= -HomeSpeed) {
+    //   contrl_signl = -HomeSpeed;
+    // }
+
+    if (contrl_signl >= 0)
+    {
+      analogWrite(Motor_PWM, contrl_signl);
+      analogWrite(Motor_Dir, 255);
+    }
+
+    else
+    {
+      analogWrite(Motor_PWM, -contrl_signl);
+      analogWrite(Motor_Dir, 0);
+    }
+    // Serial.print("Set point:");
+    // Serial.print(setpoint);
+    // Serial.print(" | Control Signal:");
+    // Serial.print(contrl_signl);
+    // Serial.print(" | Current Degree");
+    // Serial.println(Motor1.getCurDeg());
+  }
 }
 
 void sendSensorSignal()
@@ -104,21 +145,21 @@ void setup()
   //--------------------- Motor Init ---------------------
   Motor1.set_PID(PID);
   Motor1.setpwm_res(255);
+  Motor1.Fuzzy_init(posCP, posErr, veloCP, veloErr, FuzzyRules);
 
+  //--------------------- CAN Init -----------------------
   // can_init();
-
   // pinMode(CAN0_INT, INPUT); // Configuring pin for /INT input
-
   // attachInterrupt(digitalPinToInterrupt(CAN0_INT), can_read, LOW);
 
+  //-------------------- Timer Init ----------------------
   ITimer1.init();
-
   if (ITimer1.attachInterrupt(TIMER1_FREQUENCY, pidCall))
     Serial.println("Starting Timer1 OK!");
   else
     Serial.println("Can't set Timer1");
 
-  //------------------ Encoder Interrupt ------------------
+  //-------------------- Encoder Init --------------------
   pinMode(Enc_A, INPUT);
   pinMode(Enc_B, INPUT);
   Motor1.enc_Init(digitalRead(Enc_A), digitalRead(Enc_B));
@@ -126,21 +167,22 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(Enc_B), enc, CHANGE);
   pinMode(Offset_Enc_A, INPUT);
   pinMode(Offset_Enc_B, INPUT);
+
   //------------------- Control Init ---------------------
   pinMode(PkgSensor, INPUT);
   pinMode(Control_Pin, INPUT);
   pinMode(Open_Offset_Mode, INPUT);
   pinMode(Home_Offset_Mode, INPUT);
   // pinMode(Test_Mode, INPUT);
-  EEPROM.begin();
 
+  EEPROM.begin();
   EEPROM.write(0, 1);
   EEPROM.write(1, 0);
   EEPROM.write(2, 0);
   EEPROM.write(3, 0);
   EEPROM.write(4, 0);
   EEPROM.write(5, 1);
-  EEPROM.write(6, 5);
+  EEPROM.write(6, 3);
   EEPROM.write(7, 0);
   EEPROM.write(8, 0);
   EEPROM.write(9, 0);

@@ -1,4 +1,5 @@
 #include "MotorControl.h"
+#define PI 3.1415926536
 int enc_dir = 1;
 
 MotorControl::MotorControl(int rated_V, int enc_pulse_per_phase, String enc_type)
@@ -14,6 +15,11 @@ MotorControl::MotorControl(int rated_V, int enc_pulse_per_phase, String enc_type
     // {
     //     this->_enc_type[i] = enc_type[i];
     // }
+}
+
+void MotorControl::Fuzzy_init(float posCP[7], float posErr, float veloCP[7], float veloErr, float FuzzyRules[7][7])
+{
+    myFuzzy.Init(posCP, posErr, veloCP, veloErr, FuzzyRules);
 }
 
 void MotorControl::set_PID(float PID[3])
@@ -95,34 +101,51 @@ int MotorControl::PID_pos_control(float setpoint, float timespan, String unit)
 {
     uint32_t timer = millis();
     float _setpoint;
+    bool resetVelo = false;
+
+    // -----Check if new setpoint-----
     if (setpoint != this->_prev_setpoint)
     {
         this->resetIntegral();
-        //Serial.println("Reset Integral!");
         this->_prev_setpoint = setpoint;
         this->_new_setpoint = true;
+        resetVelo = true;
     }
+
+    // -----Check if Unit is Degree or Radian-----
     if (unit.compareTo("Deg") == 0)
-        _setpoint = setpoint * 3.1415 / 180;
+        _setpoint = setpoint * PI / 180;
     else
         _setpoint = setpoint;
     float err = _setpoint - getCurRad();
 
+    // -----Terminate Integral if error is small -----
     if (abs(err) >= 0.03)
         _integralTimer = millis();
     if (millis() - _integralTimer >= 1000)
         this->resetIntegral();
-    if (abs(err) <= 0.01 && this->_new_setpoint == true)
+
+    // -----Terminate Integral ONCE to prevent overshoot-----
+    if (abs(err) <= 0.05 && this->_new_setpoint == true)
     {
         this->resetIntegral();
         this->_new_setpoint = false;
-        //Serial.println("Reset Integral!");
+        // Serial.println("Reset Integral!");
     }
 
     _integral += err * timespan;
     float Pout = _PID[0] * err;
     float Iout = _PID[1] * _integral;
-    float Dout = _PID[2] * (err - this->_prev_err) / timespan;
+    float Dout;
+    if (resetVelo == false)
+    {
+        Dout = _PID[2] * (err - this->_prev_err) / timespan;
+    }
+    else
+    {
+        Dout = 0;
+    }
+
     Serial.print(setpoint);
     Serial.print(" ");
     Serial.print("P:");
@@ -144,4 +167,19 @@ int MotorControl::PID_pos_control(float setpoint, float timespan, String unit)
         return (int)((Pout + Iout + Dout) * this->_pwm_res / this->_rated_V);
 
     // Serial.println("Test");
+}
+
+int MotorControl::Fuzzy_pos_control(float setpoint, float timespan, String unit = "Deg")
+{
+    float _setpoint;
+    // -----Check if Unit is Degree or Radian-----
+    if (unit.compareTo("Deg") == 0)
+        _setpoint = setpoint;
+    else
+        _setpoint = setpoint * 180 / PI;
+    float pos = setpoint - getCurDeg();
+    float velo = (pos - this->_prev_err) / timespan;
+
+    return myFuzzy.Result(pos, velo);
+    this->_prev_err = pos;
 }
