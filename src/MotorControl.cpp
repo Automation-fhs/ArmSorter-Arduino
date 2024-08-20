@@ -134,6 +134,8 @@ int MotorControl::PID_pos_control(float setpoint, float timespan, String unit)
         this->_new_setpoint = false;
         // Serial.println("Reset Integral!");
     }
+    
+
 
     _integral += err * timespan;
     float Pout = _PID[0] * err;
@@ -146,20 +148,23 @@ int MotorControl::PID_pos_control(float setpoint, float timespan, String unit)
     else
     {
         Dout = 0;
+        resetVelo = false;
     }
 
-    Serial.print(setpoint);
+    Serial.print(this->getCurDeg());
     Serial.print(" ");
-    Serial.print("P:");
+    //Serial.print("P:");
     Serial.print(Pout);
     Serial.print(" ");
-    Serial.print("I:");
+    //Serial.print("I:");
     Serial.print(Iout);
     Serial.print(" ");
-    Serial.print("D:");
+    //Serial.print("D:");
     Serial.println(Dout);
 
     this->_prev_err = err;
+
+    if(abs(err) <= 0.02 && abs(Dout) <= 2.5) return 0;
     // Serial.println(millis() - timer);
     if (Pout + Iout + Dout > this->_rated_V)
         return this->_pwm_res;
@@ -179,9 +184,13 @@ int MotorControl::Fuzzy_pos_control(float setpoint, float timespan, String unit 
         _setpoint = setpoint;
     else
         _setpoint = setpoint * 180 / PI;
-    float pos = setpoint - getCurDeg();
+    float pos = getCurDeg() - setpoint;
     float velo = (pos - this->_prev_err) / timespan;
-
-    return myFuzzy.Result(pos, velo);
     this->_prev_err = pos;
+    Serial.print(getCurDeg());
+    Serial.print(" ");
+    Serial.print(velo);
+    Serial.print(" ");
+    Serial.println(myFuzzy.Result(pos, velo));
+    return myFuzzy.Result(pos, velo);
 }

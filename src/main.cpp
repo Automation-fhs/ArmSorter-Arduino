@@ -33,13 +33,13 @@ void pidCall()
     // contrl_signl = (contrl_signl + 255) / 2;
     // analogWrite(Motor_PWM, contrl_signl);
     float curDeg = Motor1.getCurDeg();
-    if (curDeg >= openDeg + 15)
+    if (curDeg >= openDeg + 3)
     {
-      contrl_signl = -HomeSpeed;
+      contrl_signl -= HomeSpeed;
     }
-    if (curDeg <= homeDeg - 15)
+    if (curDeg <= homeDeg - 3)
     {
-      contrl_signl = HomeSpeed;
+      contrl_signl += HomeSpeed;
     }
     // if(curDeg <= 7 && contrl_signl <= -HomeSpeed) {
     //   contrl_signl = -HomeSpeed;
@@ -189,8 +189,8 @@ void setup()
 
   // homeDeg = 2 * ((float)EEPROM.read(0) - 0.5) * (EEPROM.read(1) * 10 + EEPROM.read(2) + ((float)EEPROM.read(3)) / 10 + ((float)EEPROM.read(4)) / 100);
   // openDeg = 2 * ((float)EEPROM.read(5) - 0.5) * (EEPROM.read(6) * 10 + EEPROM.read(7) + ((float)EEPROM.read(8)) / 10 + ((float)EEPROM.read(9)) / 100);
-  homeDeg = 0;
-  openDeg = 35;
+  homeDeg = HomeDegree;
+  openDeg = OpenDegree;
   // homeDeg = 0;
   // openDeg = 60;
 }
@@ -425,7 +425,8 @@ void loop()
   //   Motor1.setCurPulse(CallibHome);
   // }
   // prev_Home = digitalRead(Home_Sensor);
-  if (!digitalRead(Control_Pin))
+  if(test == false) {
+    if (!digitalRead(Control_Pin))
   {
     sTimer = millis();
     setpoint = homeDeg;
@@ -435,8 +436,20 @@ void loop()
     setpoint = openDeg;
     // Serial.println("Arm Open");
   }
+  }
   // Serial.println(Motor1.getCurDeg());
   /*********************SIGNAL CONTROL MODE********************/
+  if(Serial.available()) {
+    int signal = Serial.read();
+    if(signal == 49) {
+      setpoint = OpenDegree;
+      test = true;
+    }
+    else {
+      setpoint = HomeDegree;
+      test = false;
+      }
+  }
 }
 
 /*********************************************************************************************************

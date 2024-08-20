@@ -44,6 +44,8 @@
 #define Enc_PPP 1000
 #define PkgSensor 18
 #define CallibHome 320
+#define HomeDegree 0
+#define OpenDegree 35
 
 MotorControl Motor1 = MotorControl(Motor_Voltage, Enc_PPP);
 
@@ -54,10 +56,10 @@ int cur_P = 0;
 
 // ----- Motor -----
 // float PID[3] = {0.6, 0.2, 0.26};
-float PID[3] = {18, 5, 6};
+float PID[3] = {19, 2.2, 4.7};
 // float PID[3] = {34.2, 20, 8.55};
 float posCP[] = {-35, -30, -5, 0, 5, 30, 35};
-float veloCP[] = {-200, -100, -20, 0, 20, 100, 200};
+float veloCP[] = {-400, -200, -100, 0, 100, 200, 400};
 float PWMVal[] = {255, 255, 200, 150, 100, 50, 0};
 float posErr = 1;
 float veloErr = 10;
@@ -88,6 +90,7 @@ bool isHome = false;
 bool sensorSgnlSent = false;
 bool useSensor = false;
 bool errState = false;
+bool test = false;
 
 bool err = false;
 int led = 0;
