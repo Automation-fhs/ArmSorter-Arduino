@@ -43,9 +43,9 @@
 #define Motor_Voltage 12
 #define Enc_PPP 1000
 #define PkgSensor 18
-#define CallibHome 320
-#define HomeDegree 0
-#define OpenDegree 35
+#define CallibHome 360
+
+
 
 MotorControl Motor1 = MotorControl(Motor_Voltage, Enc_PPP);
 
@@ -56,7 +56,7 @@ int cur_P = 0;
 
 // ----- Motor -----
 // float PID[3] = {0.6, 0.2, 0.26};
-float PID[3] = {19, 2.2, 4.7};
+float PID[3] = {16, 2, 3.5};
 // float PID[3] = {34.2, 20, 8.55};
 float posCP[] = {-35, -30, -5, 0, 5, 30, 35};
 float veloCP[] = {-400, -200, -100, 0, 100, 200, 400};
@@ -93,6 +93,7 @@ bool errState = false;
 bool test = false;
 
 bool err = false;
+bool newsetpoint = false;
 int led = 0;
 uint32_t t = millis();
 uint32_t sTimer = millis();

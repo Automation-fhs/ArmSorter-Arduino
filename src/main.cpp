@@ -2,6 +2,42 @@
 
 char str[50];
 
+
+void homeMode()
+{
+  Serial.println("Finding Home");
+  if (digitalRead(Home_Sensor))
+  {
+    analogWrite(Motor_Dir, 0);
+    analogWrite(Motor_PWM, HomeSpeed);
+    while (digitalRead(Home_Sensor))
+    {
+      // Serial.println("Finding Home");
+      analogWrite(Motor_PWM, HomeSpeed);
+    }
+    Motor1.setCurPulse(CallibHome);
+    // Serial.println("Home found!");
+  }
+  else
+  {
+    analogWrite(Motor_Dir, 255);
+    analogWrite(Motor_PWM, HomeSpeed);
+    while (!digitalRead(Home_Sensor))
+    {
+      analogWrite(Motor_PWM, HomeSpeed);
+    }
+    analogWrite(Motor_PWM, 0);
+    analogWrite(Motor_Dir, 0);
+    while (digitalRead(Home_Sensor))
+    {
+      analogWrite(Motor_PWM, HomeSpeed);
+    }
+    Motor1.setCurPulse(CallibHome);
+  }
+  analogWrite(Motor_PWM, 0);
+}
+
+
 void enc()
 {
   Motor1.upd_Pulse(digitalRead(Enc_A), digitalRead(Enc_B));
@@ -20,12 +56,8 @@ void enc()
 
 void pidCall()
 {
-  // if (abs(prev_contrl_signl) >= HomeSpeed && abs(Motor1.getCurPulse() - prev_pos) <= 20)
-  // {
-  //   errState = true;
-  //   armed = false;
-  // }
-
+  if(setpoint == homeDeg && newsetpoint == false) newsetpoint = true;
+  //Serial.println("PID Calling");
   if (armed && !errState)
   {
     contrl_signl = Motor1.PID_pos_control(setpoint, TIMER1_INTERVAL_MS / 1000.0f);
@@ -44,7 +76,26 @@ void pidCall()
     // if(curDeg <= 7 && contrl_signl <= -HomeSpeed) {
     //   contrl_signl = -HomeSpeed;
     // }
-
+    if(setpoint == openDeg && newsetpoint == true && abs(Motor1.getCurDeg() - openDeg) <= 1 && contrl_signl == 0 && !digitalRead(Home_Sensor)) {
+      Serial.println("Fault Home Position");
+      newsetpoint = false;
+      analogWrite(Motor_Dir,0);
+      analogWrite(Motor_PWM,0);
+      armed = false;
+      delay(5);
+      homeMode();
+      armed = true;
+      }
+    if(setpoint == homeDeg && newsetpoint == true && abs(Motor1.getCurDeg() - homeDeg) <= 1 && contrl_signl == 0 && digitalRead(Home_Sensor)) {
+      Serial.println("Fault Home Position");
+      newsetpoint = false;
+      analogWrite(Motor_Dir,0);
+      analogWrite(Motor_PWM,0);
+      armed = false;
+      delay(5);
+      homeMode();
+      armed = true;
+    }
     if (contrl_signl >= 0)
     {
       analogWrite(Motor_PWM, contrl_signl);
@@ -170,6 +221,7 @@ void setup()
 
   //------------------- Control Init ---------------------
   pinMode(PkgSensor, INPUT);
+
   pinMode(Control_Pin, INPUT);
   pinMode(Open_Offset_Mode, INPUT);
   pinMode(Home_Offset_Mode, INPUT);
@@ -285,36 +337,7 @@ void offset(String loc)
   delay(200);
 }
 
-void homeMode()
-{
-  Serial.println("Finding Home");
-  if (digitalRead(Home_Sensor))
-  {
-    analogWrite(Motor_Dir, 0);
-    while (digitalRead(Home_Sensor))
-    {
-      // Serial.println("Finding Home");
-      analogWrite(Motor_PWM, HomeSpeed);
-    }
-    // Serial.println("Home found!");
-  }
-  else
-  {
-    analogWrite(Motor_Dir, 255);
-    while (!digitalRead(Home_Sensor))
-    {
-      analogWrite(Motor_PWM, HomeSpeed);
-    }
-    analogWrite(Motor_PWM, 0);
-    analogWrite(Motor_Dir, 0);
-    while (digitalRead(Home_Sensor))
-    {
-      analogWrite(Motor_PWM, HomeSpeed);
-    }
-  }
-  analogWrite(Motor_PWM, 0);
-  Motor1.setCurPulse(CallibHome);
-}
+
 
 void getMinSpeed()
 {
@@ -331,6 +354,8 @@ void getMinSpeed()
 
 void loop()
 {
+  // analogWrite(Motor_Dir, 255);
+  // analogWrite(Motor_PWM, HomeSpeed);
   // if (errState)
   // {
   //   while (!digitalRead(Home_Offset_Mode) || !digitalRead(Open_Offset_Mode) || !digitalRead(OffsetConfirm))
@@ -442,11 +467,11 @@ void loop()
   if(Serial.available()) {
     int signal = Serial.read();
     if(signal == 49) {
-      setpoint = OpenDegree;
+      setpoint = openDeg;
       test = true;
     }
     else {
-      setpoint = HomeDegree;
+      setpoint = homeDeg;
       test = false;
       }
   }

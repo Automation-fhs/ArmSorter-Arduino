@@ -21,7 +21,10 @@ public:
         if (val > this->_d1 && val < this->_d2)
             return 1 - (val - this->_d1) / (this->_d2 - this->_d1);
     }
-
+    bool checkValue(float val) {
+        if(val >= this->_a1 && val <= this->_d2) return true;
+        else return false;
+    };
 private:
     float _a1, _a2, _d1, _d2;
 };

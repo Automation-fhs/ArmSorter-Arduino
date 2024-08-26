@@ -1,6 +1,7 @@
 #include <string.h>
 #include <Arduino.h>
 #include <Fuzzy.h>
+#include "params.h"
 
 class MotorControl
 {
@@ -11,7 +12,9 @@ public:
     void Fuzzy_init(float posCP[7], float posErr, float veloCP[7], float veloErr, float FuzzyRules[7][7]);
     // -----Encoder-----
     void enc_Init(int cur_A, int cur_B);
+    void enc_Init_NR(char cur_A, char cur_B);
     void upd_Pulse(int cur_A, int cur_B);
+    void upd_Pulse_NR(char cur_A, char cur_B);
     void setCurPulse(uint32_t cur_Plse);
     uint32_t getCurPulse();
     float getCurDeg();
@@ -32,11 +35,13 @@ private:
     // ----- Encoder -----
     int enc_pulse_per_phase;
     uint32_t _cur_pulse = 0;
+    uint32_t _cur_pulse_NR = 0;
     int _total_pulse;
     int _pulse_per_chnl;
     int _prev_A;
     int _prev_B;
     uint32_t _integralTimer = 0;
+    char EncoderVal = 0;
 
     // ----- PID -----
     float _PID[3];

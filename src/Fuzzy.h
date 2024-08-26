@@ -1,4 +1,5 @@
 #include "FuzzySet.h"
+#include <Arduino.h>
 
 class Fuzzy
 {

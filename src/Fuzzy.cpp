@@ -58,7 +58,7 @@ void Fuzzy::Init(float posCP[7], float posErr, float veloCP[7], float veloErr, f
     Velo[6].Init(this->_veloCP[5], this->_veloCP[6], this->_veloCP[6], this->_veloCP[6]);
 }
 
-float min(float a, float b)
+float minVal(float a, float b)
 {
     if (a < b)
         return a;
@@ -70,13 +70,31 @@ float Fuzzy::Result(float posVal, float veloVal)
 {
     float sumVal = 0;
     float sumMem = 0;
+    int i = 0;
+    while(posVal >= _posCP[i] && i < 7) {
+        i++;
+    }
+    int j = 0;
+    while(veloVal >= _veloCP[i] && j < 7) {
+        j++;
+    }
+
     for (int i = 0; i < 7; i++)
     {
         for (int j = 0; j < 7; j++)
         {
-            sumVal += this->_FuzzyRules[i][j] * min(Position[i].membership(posVal), Velo[j].membership(veloVal));
+            Serial.print(i);
+            Serial.print(" ");
+            Serial.print(j);
+            Serial.print(" ");
+            Serial.print(posVal);
+            Serial.print(" ");
+            Serial.print(veloVal);
+            Serial.print(" ");
+            sumVal += this->_FuzzyRules[i][j] * minVal(Position[i].membership(posVal), Velo[j].membership(veloVal));
             // console.log(`Value at pos ${i} vel ${j} is ${Math.min(Position[i].membership(posVal),Velo[j].membership(veloVal))}`);
-            sumMem += min(Position[i].membership(posVal), Velo[j].membership(veloVal));
+            sumMem += minVal(Position[i].membership(posVal), Velo[j].membership(veloVal));
+            Serial.println(sumVal);
         }
     }
     return sumVal / sumMem;
