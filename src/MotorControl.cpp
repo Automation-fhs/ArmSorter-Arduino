@@ -1,7 +1,7 @@
 #include "MotorControl.h"
 #define PI 3.1415926536
 int enc_dir = 1;
-int Enc_NR[16] = {0,-1,1,0,1,0,0,-1,-1,0,0,1,0,1,-1,0};
+int Enc_NR[16] = {0, -1, 1, 0, 1, 0, 0, -1, -1, 0, 0, 1, 0, 1, -1, 0};
 
 MotorControl::MotorControl(int rated_V, int enc_pulse_per_phase, String enc_type)
 {
@@ -46,15 +46,17 @@ void MotorControl::enc_Init(int cur_A, int cur_B)
     this->_prev_B = cur_B;
 }
 
-void MotorControl::enc_Init_NR(char cur_A, char cur_B) {
-    EncoderVal = ((cur_A<<1)|cur_B|EncoderVal)&0x0f;
+void MotorControl::enc_Init_NR(char cur_A, char cur_B)
+{
+    EncoderVal = ((cur_A << 1) | cur_B | EncoderVal) & 0x0f;
 }
 
 void MotorControl::upd_Pulse(int cur_A, int cur_B)
 {
     if (cur_A == _prev_A)
     {
-        if(cur_B != _prev_B) {
+        if (cur_B != _prev_B)
+        {
             if (cur_A != cur_B)
             {
                 _cur_pulse += enc_dir;
@@ -67,15 +69,16 @@ void MotorControl::upd_Pulse(int cur_A, int cur_B)
     }
     else
     {
-        if(cur_B == _prev_B) {
+        if (cur_B == _prev_B)
+        {
             if (cur_A != cur_B)
-        {
-            _cur_pulse -= enc_dir;
-        }
-        else
-        {
-            _cur_pulse += enc_dir;
-        }
+            {
+                _cur_pulse -= enc_dir;
+            }
+            else
+            {
+                _cur_pulse += enc_dir;
+            }
         }
     }
     _prev_A = cur_A;
@@ -84,9 +87,10 @@ void MotorControl::upd_Pulse(int cur_A, int cur_B)
     // else this->_cur_pulse -= enc_dir;
 }
 
-void MotorControl::upd_Pulse_NR(char cur_A, char cur_B) {
+void MotorControl::upd_Pulse_NR(char cur_A, char cur_B)
+{
     EncoderVal = EncoderVal << 2;
-    EncoderVal = ((cur_A<<1)|cur_B|EncoderVal)&0x0f;
+    EncoderVal = ((cur_A << 1) | cur_B | EncoderVal) & 0x0f;
     _cur_pulse_NR -= Enc_NR[EncoderVal];
 }
 
@@ -99,8 +103,8 @@ float MotorControl::getCurDeg()
 {
     if (this->_enc_type.compareTo("AB") == 0)
     {
-        int absPulse = (this->_cur_pulse + this->enc_pulse_per_phase*2) % (4*this->enc_pulse_per_phase);
-        return absPulse * (1 - 2*1000 / (float)abs(absPulse)) * 360 / (4000);
+        int absPulse = (this->_cur_pulse + this->enc_pulse_per_phase * 2) % (4 * this->enc_pulse_per_phase);
+        return absPulse * (1 - 2 * 1000 / (float)abs(absPulse)) * 360 / (4000);
     }
     else
         return 0;
@@ -151,39 +155,35 @@ int MotorControl::PID_pos_control(float setpoint, float timespan, String unit)
         this->_new_setpoint = false;
         // Serial.println("Reset Integral!");
     }
-    
-
 
     _integral += err * timespan;
     float Pout = _PID[0] * err;
     float Iout = _PID[1] * _integral;
-    float Dout;
-    if (resetVelo == false)
-    {
-        Dout = _PID[2] * (err - this->_prev_err) / timespan;
-    }
-    else
+    float Dout = _PID[2] * (err - this->_prev_err) / timespan;
+    if (resetVelo)
     {
         Dout = 0;
         resetVelo = false;
     }
 
-    Serial.print(this->getCurDeg());
+    Serial.print(double(this->getCurDeg()));
     Serial.print(" ");
-    //Serial.print("P:");
-    Serial.print(Pout);
-    Serial.print(" ");
-    //Serial.print("I:");
-    Serial.print(Iout);
-    Serial.print(" ");
-    //Serial.print("D:");
-    Serial.println(Dout);
+    Serial.println(double((err - this->_prev_err) / timespan));
+    // // Serial.print("P:");
+    // Serial.print(Pout);
+    // Serial.print(" ");
+    // // Serial.print("I:");
+    // Serial.print(Iout);
+    // Serial.print(" ");
+    // // Serial.print("D:");
+    // Serial.println(Dout);
 
     this->_prev_err = err;
 
-    if(abs(err) <= 0.02 && abs(Dout) <= 2.5) return 0;
-    //else if (setpoint == OpenDegree && err <= 0.02 && abs(Dout) <= 1.5) return 0;
-    // Serial.println(millis() - timer);
+    if (abs(err) <= 0.02 && abs(Dout) <= 2.5)
+        return 0;
+    // else if (setpoint == OpenDegree && err <= 0.02 && abs(Dout) <= 1.5) return 0;
+    //  Serial.println(millis() - timer);
     if (Pout + Iout + Dout > this->_rated_V)
         return this->_pwm_res;
     else if (Pout + Iout + Dout < -this->_rated_V)
@@ -204,7 +204,7 @@ int MotorControl::Fuzzy_pos_control(float setpoint, float timespan, String unit 
     else
         _setpoint = setpoint * 180 / PI;
 
-        if (setpoint != this->_prev_setpoint)
+    if (setpoint != this->_prev_setpoint)
     {
         this->resetIntegral();
         this->_prev_setpoint = setpoint;

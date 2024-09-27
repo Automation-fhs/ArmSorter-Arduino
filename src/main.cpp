@@ -2,7 +2,6 @@
 
 char str[50];
 
-
 void homeMode()
 {
   Serial.println("Finding Home");
@@ -37,7 +36,6 @@ void homeMode()
   analogWrite(Motor_PWM, 0);
 }
 
-
 void enc()
 {
   Motor1.upd_Pulse(digitalRead(Enc_A), digitalRead(Enc_B));
@@ -56,8 +54,9 @@ void enc()
 
 void pidCall()
 {
-  if(setpoint == homeDeg && newsetpoint == false) newsetpoint = true;
-  //Serial.println("PID Calling");
+  if (setpoint == homeDeg && newsetpoint == false)
+    newsetpoint = true;
+  // Serial.println("PID Calling");
   if (armed && !errState)
   {
     contrl_signl = Motor1.PID_pos_control(setpoint, TIMER1_INTERVAL_MS / 1000.0f);
@@ -76,21 +75,23 @@ void pidCall()
     // if(curDeg <= 7 && contrl_signl <= -HomeSpeed) {
     //   contrl_signl = -HomeSpeed;
     // }
-    if(setpoint == openDeg && newsetpoint == true && abs(Motor1.getCurDeg() - openDeg) <= 1 && contrl_signl == 0 && !digitalRead(Home_Sensor)) {
+    if (setpoint == openDeg && newsetpoint == true && abs(Motor1.getCurDeg() - openDeg) <= 1 && contrl_signl == 0 && !digitalRead(Home_Sensor))
+    {
       Serial.println("Fault Home Position");
       newsetpoint = false;
-      analogWrite(Motor_Dir,0);
-      analogWrite(Motor_PWM,0);
+      analogWrite(Motor_Dir, 0);
+      analogWrite(Motor_PWM, 0);
       armed = false;
       delay(5);
       homeMode();
       armed = true;
-      }
-    if(setpoint == homeDeg && newsetpoint == true && abs(Motor1.getCurDeg() - homeDeg) <= 1 && contrl_signl == 0 && digitalRead(Home_Sensor)) {
+    }
+    if (setpoint == homeDeg && newsetpoint == true && abs(Motor1.getCurDeg() - homeDeg) <= 1 && contrl_signl == 0 && digitalRead(Home_Sensor))
+    {
       Serial.println("Fault Home Position");
       newsetpoint = false;
-      analogWrite(Motor_Dir,0);
-      analogWrite(Motor_PWM,0);
+      analogWrite(Motor_Dir, 0);
+      analogWrite(Motor_PWM, 0);
       armed = false;
       delay(5);
       homeMode();
@@ -337,8 +338,6 @@ void offset(String loc)
   delay(200);
 }
 
-
-
 void getMinSpeed()
 {
   float curDeg = Motor1.getCurDeg();
@@ -450,30 +449,34 @@ void loop()
   //   Motor1.setCurPulse(CallibHome);
   // }
   // prev_Home = digitalRead(Home_Sensor);
-  if(test == false) {
+  if (test == false)
+  {
     if (!digitalRead(Control_Pin))
-  {
-    sTimer = millis();
-    setpoint = homeDeg;
-  }
-  if (millis() - sTimer >= 100)
-  {
-    setpoint = openDeg;
-    // Serial.println("Arm Open");
-  }
+    {
+      sTimer = millis();
+      setpoint = homeDeg;
+    }
+    if (millis() - sTimer >= 100)
+    {
+      setpoint = openDeg;
+      // Serial.println("Arm Open");
+    }
   }
   // Serial.println(Motor1.getCurDeg());
   /*********************SIGNAL CONTROL MODE********************/
-  if(Serial.available()) {
+  if (Serial.available())
+  {
     int signal = Serial.read();
-    if(signal == 49) {
+    if (signal == 49)
+    {
       setpoint = openDeg;
       test = true;
     }
-    else {
+    else
+    {
       setpoint = homeDeg;
       test = false;
-      }
+    }
   }
 }
 
