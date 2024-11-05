@@ -168,16 +168,16 @@ int MotorControl::PID_pos_control(float setpoint, float timespan, String unit)
         resetVelo = false;
     }
 
-    Serial.print(this->getCurDeg());
-    Serial.print(" ");
-    //Serial.print("P:");
-    Serial.print(Pout);
-    Serial.print(" ");
-    //Serial.print("I:");
-    Serial.print(Iout);
-    Serial.print(" ");
-    //Serial.print("D:");
-    Serial.println(Dout);
+    // Serial.print(this->getCurDeg());
+    // Serial.print(" ");
+    // //Serial.print("P:");
+    // Serial.print(Pout);
+    // Serial.print(" ");
+    // //Serial.print("I:");
+    // Serial.print(Iout);
+    // Serial.print(" ");
+    // //Serial.print("D:");
+    // Serial.println(Dout);
 
     this->_prev_err = err;
 
