@@ -24,28 +24,31 @@
 
 #define TIMER1_INTERVAL_MS 10
 #define TIMER1_FREQUENCY (float)(1000.0f / TIMER1_INTERVAL_MS)
-#define Motor_PWM 4
-#define Motor_Dir 3
+#define Motor_PWM 5
+#define Motor_Dir 4
 #define Control_Pin 23
 // #define Test_Mode 25
-#define Enc_B 20
 #define Enc_A 21
-#define Home_Sensor 25
-#define Open_Offset_Mode 27
-#define Home_Offset_Mode 29
-#define OffsetConfirm 31
-#define Offset_Enc_A 33
-#define Offset_Enc_B 35
+#define Enc_B 20
+#define Enc_Z 19
+#define Home_Sensor 18
+// #define Open_Offset_Mode 27
+// #define Home_Offset_Mode 29
+// #define OffsetConfirm 31
+// #define Offset_Enc_A 33
+// #define Offset_Enc_B 35
 #define HomeSpeed 30
-#define Enc_Z
 #define Home_Offset_Addr 0
 #define Open_Offset_Addr 1
 #define Motor_Voltage 12
 #define Enc_PPP 1000
 #define PkgSensor 18
 #define CallibHome 325
-
-
+#define CallibZ 200
+#define Open_BTN 42
+#define Close_BTN 44
+#define Spare_BTN 40
+#define NL_Pin 2
 
 MotorControl Motor1 = MotorControl(Motor_Voltage, Enc_PPP);
 
@@ -53,6 +56,7 @@ MotorControl Motor1 = MotorControl(Motor_Voltage, Enc_PPP);
 
 String enc_type = "AB";
 int cur_P = 0;
+int NL_Sgnl;
 
 // ----- Motor -----
 // float PID[3] = {0.6, 0.2, 0.26};
