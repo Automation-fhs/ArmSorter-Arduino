@@ -43,7 +43,7 @@
 #define Motor_Voltage 12
 #define Enc_PPP 1000
 #define PkgSensor 18
-#define CallibHome 325
+#define CallibHome 400
 #define CallibZ 200
 #define Open_BTN 42
 #define Close_BTN 44
@@ -58,9 +58,11 @@ String enc_type = "AB";
 int cur_P = 0;
 int NL_Sgnl;
 
+
+
 // ----- Motor -----
 // float PID[3] = {0.6, 0.2, 0.26};
-float PID[3] = {16, 0.75, 2.5};
+float PID[3] = {12, 0.5, 1.2};
 // float PID[3] = {34.2, 20, 8.55};
 float posCP[] = {-35, -30, -5, 0, 5, 30, 35};
 float veloCP[] = {-400, -200, -100, 0, 100, 200, 400};
@@ -89,12 +91,12 @@ bool prev_Home;
 bool armed = false;
 int contrl_signl;
 int prev_contrl_signl;
-float prev_pos;
 bool isHome = false;
 bool sensorSgnlSent = false;
 bool useSensor = false;
 bool errState = false;
 bool test = false;
+
 
 bool err = false;
 bool newsetpoint = false;

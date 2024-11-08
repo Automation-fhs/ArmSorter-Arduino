@@ -16,7 +16,7 @@ public:
     void upd_Pulse(int cur_A, int cur_B);
     void upd_Pulse_NR(char cur_A, char cur_B);
     void setCurPulse(uint32_t cur_Plse);
-    uint32_t getCurPulse();
+    long getCurPulse();
     float getCurDeg();
     float getCurRad();
     void resetIntegral();
@@ -34,8 +34,8 @@ private:
 
     // ----- Encoder -----
     int enc_pulse_per_phase;
-    uint32_t _cur_pulse = 0;
-    uint32_t _cur_pulse_NR = 0;
+    long int _cur_pulse = 0;
+    long _cur_pulse_NR = 0;
     int _total_pulse;
     int _pulse_per_chnl;
     int _prev_A;

@@ -94,7 +94,7 @@ void MotorControl::upd_Pulse_NR(char cur_A, char cur_B)
     _cur_pulse_NR -= Enc_NR[EncoderVal];
 }
 
-uint32_t MotorControl::getCurPulse()
+long MotorControl::getCurPulse()
 {
     return this->_cur_pulse;
 }
@@ -105,7 +105,7 @@ float MotorControl::getCurDeg()
     {
         // int absPulse = (this->_cur_pulse + this->enc_pulse_per_phase * 2) % (4 * this->enc_pulse_per_phase);
         // return absPulse * (1 - 2 * 1000 / (float)abs(absPulse)) * 360 / (4000);
-        return float(this->_cur_pulse / (2*this->enc_pulse_per_phase))*180;
+        return float(this->_cur_pulse) / (2*this->enc_pulse_per_phase)*180;
     }
     else
         return 0;

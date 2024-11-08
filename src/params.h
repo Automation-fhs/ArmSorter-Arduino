@@ -11,7 +11,7 @@
 #define ArmConfChange 0x07
 #define TestCommand 0x08
 #define HomeDegree 0
-#define OpenDegree 30
+#define OpenDegree 40
 
 // Error code
 #define MsgCodeFailure 0x00
