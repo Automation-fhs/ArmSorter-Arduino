@@ -42,7 +42,7 @@
 #define Open_Offset_Addr 1
 #define Motor_Voltage 12
 #define Enc_PPP 1000
-#define PkgSensor 18
+#define PkgSensor 23
 #define CallibHome 400
 #define CallibZ 200
 #define Open_BTN 42
@@ -57,8 +57,6 @@ MotorControl Motor1 = MotorControl(Motor_Voltage, Enc_PPP);
 String enc_type = "AB";
 int cur_P = 0;
 int NL_Sgnl;
-
-
 
 // ----- Motor -----
 // float PID[3] = {0.6, 0.2, 0.26};
@@ -96,7 +94,6 @@ bool sensorSgnlSent = false;
 bool useSensor = false;
 bool errState = false;
 bool test = false;
-
 
 bool err = false;
 bool newsetpoint = false;
