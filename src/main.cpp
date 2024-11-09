@@ -47,7 +47,8 @@ void homeMode()
 
 void enc()
 {
-  if(!enc_err_test) Motor1.upd_Pulse(digitalRead(Enc_A), digitalRead(Enc_B));
+  if (!enc_err_test)
+    Motor1.upd_Pulse(digitalRead(Enc_A), digitalRead(Enc_B));
   // bool cur_Home = digitalRead(Home_Sensor);
   // uint32_t motorPos = Motor1.getCurPulse();
   // if (prev_Home == 1 && !cur_Home && motorPos >= CallibHome - 100 && motorPos <= CallibHome + 100 && setpoint == HomeDegree)
@@ -63,7 +64,8 @@ void enc()
 
 void pidCall()
 {
-  if(!errState && !ard_err_test) {
+  if (!errState && !ard_err_test)
+  {
     Serial.println(Motor1.getCurPulse());
     analogWrite(NL_Pin, NL_Sgnl);
     // digitalWrite(NL_Pin, HIGH);
@@ -72,12 +74,11 @@ void pidCall()
     else
       NL_Sgnl += 5;
   }
-  
-  
-if (setpoint == homeDeg && newsetpoint == false)
+
+  if (setpoint == homeDeg && newsetpoint == false)
     newsetpoint = true;
   // Serial.println("PID Calling");
-if (armed && !errState)
+  if (armed && !errState)
   {
     contrl_signl = Motor1.PID_pos_control(setpoint, TIMER1_INTERVAL_MS / 1000.0f);
 
@@ -102,17 +103,19 @@ if (armed && !errState)
       armed = false;
       home_err = true;
     }
-    if(abs(contrl_signl) <= HomeSpeed + 10) {
+    if (abs(contrl_signl) <= HomeSpeed + 10)
+    {
       control_timer = millis();
     }
-  if(millis() - control_timer >= 200 && abs(Motor1.getCurPulse() - prev_pos) <= 1) {
+    if (millis() - control_timer >= 200 && abs(Motor1.getCurPulse() - prev_pos) <= 1)
+    {
       analogWrite(Motor_PWM, 0);
       errState = true;
       armed = false;
       contrl_signl = 0;
-      analogWrite(Motor_PWM,0);
+      analogWrite(Motor_PWM, 0);
       Serial.println("Encoder Error!!");
-  }
+    }
 
     if (contrl_signl >= 0)
     {
@@ -125,7 +128,7 @@ if (armed && !errState)
       analogWrite(Motor_PWM, -contrl_signl);
       analogWrite(Motor_Dir, 0);
     }
-  prev_pos = Motor1.getCurPulse();
+    prev_pos = Motor1.getCurPulse();
     // Serial.print("Set point:");
     // Serial.print(setpoint);
     // Serial.print(" | Control Signal:");
@@ -133,18 +136,19 @@ if (armed && !errState)
     // Serial.print(" | Current Degree");
     // Serial.println(double(Motor1.getCurDeg()));
   }
-  
 
-  if(home_err) {
-      if(!digitalRead(Home_Sensor)) {
-        analogWrite(Motor_Dir, 255);
-        analogWrite(Motor_PWM, HomeSpeed);
-      }
-      else {
-        armed = true;
-        home_err = false;
-      }
-      
+  if (home_err)
+  {
+    if (!digitalRead(Home_Sensor))
+    {
+      analogWrite(Motor_Dir, 255);
+      analogWrite(Motor_PWM, HomeSpeed);
+    }
+    else
+    {
+      armed = true;
+      home_err = false;
+    }
   }
 
   // prev_contrl_signl = contrl_signl;
@@ -229,11 +233,13 @@ void enc_Z()
 
 void home()
 {
-  if(!digitalRead(Home_Sensor)) {
+  if (!digitalRead(Home_Sensor))
+  {
     homeNR = millis();
     homeNR_Flag = true;
   }
-  else homeNR_Flag = false;
+  else
+    homeNR_Flag = false;
 }
 
 void setup()
@@ -401,9 +407,6 @@ void getMinSpeed()
 
 void loop()
 {
-  // analogWrite(Motor_Dir, 0);
-  // analogWrite(Motor_PWM, HomeSpeed);
-
   if (!isHome)
   {
     homeMode();
@@ -414,11 +417,13 @@ void loop()
     prev_Home = digitalRead(Home_Sensor);
     prev_setpoint = setpoint;
   }
-  if(homeNR_Flag && millis() - homeNR >= 50) {
-    if(Motor1.getCurPulse() >= CallibHome - 100 && Motor1.getCurPulse() <= CallibHome + 100) {
+  if (homeNR_Flag && millis() - homeNR >= 50)
+  {
+    if (Motor1.getCurPulse() >= CallibHome - 100 && Motor1.getCurPulse() <= CallibHome + 100)
+    {
       Serial.print("Callib current pulse: ");
-    Serial.println(Motor1.getCurPulse());
-    Motor1.setCurPulse(CallibHome);
+      Serial.println(Motor1.getCurPulse());
+      Motor1.setCurPulse(CallibHome);
     }
     homeNR_Flag = false;
   }
@@ -444,8 +449,10 @@ void loop()
       setpoint = openDeg;
       test = true;
     }
-    else if (signal == 53) enc_err_test = true;
-    else if (signal == 57) ard_err_test = true;
+    else if (signal == 53)
+      enc_err_test = true;
+    else if (signal == 57)
+      ard_err_test = true;
     else
     {
       setpoint = homeDeg;
