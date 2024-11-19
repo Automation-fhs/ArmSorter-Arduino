@@ -103,11 +103,11 @@ void pidCall()
       armed = false;
       home_err = true;
     }
-    if (abs(contrl_signl) <= HomeSpeed + 10)
+    if (abs(contrl_signl) <= HomeSpeed + 20 && abs(Motor1.getCurPulse() - prev_pos) <= 1)
     {
       control_timer = millis();
     }
-    if (millis() - control_timer >= 200 && abs(Motor1.getCurPulse() - prev_pos) <= 1)
+    if (millis() - control_timer >= 300 )
     {
       analogWrite(Motor_PWM, 0);
       errState = true;
