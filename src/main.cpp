@@ -103,7 +103,7 @@ void pidCall()
       armed = false;
       home_err = true;
     }
-    if (abs(contrl_signl) <= HomeSpeed + 20 && abs(Motor1.getCurPulse() - prev_pos) <= 1)
+    if (abs(contrl_signl) <= HomeSpeed + 20 || abs(Motor1.getCurPulse() - prev_pos) > 1)
     {
       control_timer = millis();
     }
@@ -160,6 +160,7 @@ void FuzzyCall()
   if (armed && !errState)
   {
     contrl_signl = Motor1.Fuzzy_pos_control(setpoint, TIMER1_INTERVAL_MS / 1000.0f);
+
 
     // contrl_signl = (contrl_signl + 255) / 2;
     // analogWrite(Motor_PWM, contrl_signl);
