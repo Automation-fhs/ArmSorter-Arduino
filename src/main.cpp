@@ -7,9 +7,20 @@ uint32_t control_timer;
 int prev_control;
 long prev_pos;
 bool home_err = false;
+bool isOpened = false;
+uint32_t sortTimer = 0;
+bool encCheck = false;
+long posdata[3][3] = {{0,-1},{0,-1},{0,-1}};
+float vel_accel[2];
+uint32_t lagTime;
+uint32_t homeStuck;
+long prevHomePulse;
 
 bool enc_err_test;
 bool ard_err_test;
+
+uint32_t getLagTime(int control_signal);
+void velacc(long curPulse);
 
 void homeMode()
 {
@@ -36,9 +47,19 @@ void homeMode()
     }
     analogWrite(Motor_PWM, 0);
     analogWrite(Motor_Dir, 0);
+    homeStuck = millis();
+    prevHomePulse = Motor1.getCurPulse();
+    int modifiedHomeSpeed = HomeSpeed;
     while (digitalRead(Home_Sensor))
     {
-      analogWrite(Motor_PWM, HomeSpeed);
+      if(prevHomePulse - Motor1.getCurPulse() > 1) {
+        homeStuck = millis();
+      }
+      if(millis() - homeStuck >= 500) {
+        modifiedHomeSpeed += 10;
+        homeStuck = millis();
+      }
+      analogWrite(Motor_PWM, modifiedHomeSpeed);
     }
     Motor1.setCurPulse(CallibHome);
   }
@@ -62,17 +83,25 @@ void enc()
   // Serial.println(Motor1.getCurDeg());
 }
 
+void encoderCheck(int curSignal, int curPulse);
+
 void pidCall()
 {
   if (!errState && !ard_err_test)
   {
+    // velacc(Motor1.getCurPulse());
     Serial.println(Motor1.getCurPulse());
+    // Serial.print(Motor1.getCurPulse());
+    // Serial.print(" | ");
+    // Serial.print(vel_accel[0]);
+    // Serial.print(" | ");
+    // Serial.println(vel_accel[1]);
     analogWrite(NL_Pin, NL_Sgnl);
     // digitalWrite(NL_Pin, HIGH);
-    if (NL_Sgnl >= 250)
+    if (NL_Sgnl > 255)
       NL_Sgnl = 0;
     else
-      NL_Sgnl += 5;
+      NL_Sgnl += 6;
   }
 
   if (setpoint == homeDeg && newsetpoint == false)
@@ -103,11 +132,20 @@ void pidCall()
       armed = false;
       home_err = true;
     }
-    if (abs(contrl_signl) <= HomeSpeed + 20 || abs(Motor1.getCurPulse() - prev_pos) > 1)
+    if (abs(contrl_signl) <= HomeSpeed + 50 || abs(Motor1.getCurPulse() - prev_pos) > 1)
     {
       control_timer = millis();
+      lagTime = getLagTime(abs(contrl_signl));
     }
-    if (millis() - control_timer >= 300 )
+    else {
+      uint32_t newLagTime = getLagTime(abs(contrl_signl));
+      if(newLagTime < lagTime) {
+        control_timer = millis();
+        lagTime = newLagTime;
+      }
+    }
+    
+    if (millis() - control_timer >= getLagTime(abs(contrl_signl)))
     {
       analogWrite(Motor_PWM, 0);
       errState = true;
@@ -115,7 +153,20 @@ void pidCall()
       contrl_signl = 0;
       analogWrite(Motor_PWM, 0);
       Serial.println("Encoder Error!!");
+      // analogWrite(Motor_PWM, 0);
+      // encCheck = true;
+      // encoderCheck(contrl_signl, Motor1.getCurPulse());
     }
+
+    // if(millis() - sortTimer >= 800 && millis() - sortTimer <= 1200 && Motor1.getCurPulse() >= 60)
+    // {
+    //   analogWrite(Motor_PWM, 0);
+    //   errState = true;
+    //   armed = false;
+    //   contrl_signl = 0;
+    //   analogWrite(Motor_PWM, 0);
+    //   Serial.println("Encoder Hard Error!!");
+    // }
 
     if (contrl_signl >= 0)
     {
@@ -434,10 +485,15 @@ void loop()
     {
       sTimer = millis();
       setpoint = homeDeg;
+      if(isOpened == true) {
+        isOpened = false;
+        sortTimer = millis();
+      }
     }
     if (millis() - sTimer >= 100)
     {
       setpoint = openDeg;
+      isOpened = true;
       // Serial.println("Arm Open");
     }
   }
@@ -462,6 +518,58 @@ void loop()
   }
 }
 
+void encoderCheck(int curSignal, int curPulse) {
+  int testDir = -1;
+  if(curSignal >= 0) {
+    testDir = 0;
+  }
+  else {
+    testDir = 1;
+  }
+  uint32_t startTime = millis();
+
+  while(encCheck) {
+    analogWrite(Motor_Dir, testDir);
+    analogWrite(Motor_PWM, HomeSpeed+10);
+    if(abs(Motor1.getCurPulse() - curPulse) >= 3) {
+      encCheck = false;
+    }
+    if(millis() - startTime >= 300) {
+      analogWrite(Motor_PWM, 0);
+      errState = true;
+      armed = false;
+      contrl_signl = 0;
+      analogWrite(Motor_PWM, 0);
+      Serial.println("Encoder Error!!");
+      encCheck = false;
+    }
+  }
+}
+
+uint32_t getLagTime(int control_signal) {
+  if(control_signal <= 60) return 300;
+  if(control_signal <= 120) return 250;
+  if(control_signal <= 200) return 200;
+  else return 150;
+}
+
+void velacc(long curPulse) {
+  posdata[0][0] = posdata[1][0];
+  posdata[0][1] = posdata[1][1];
+  posdata[1][0] = posdata[2][0];
+  posdata[1][1] = posdata[2][1];
+  posdata[2][0] = curPulse;
+  posdata[2][1] = millis();
+  float velo = float(posdata[2][0] - posdata[1][0])/(posdata[2][1] - posdata[1][1]);
+  float prevVelo;
+  if(posdata[0][1] == posdata[1][1]) prevVelo = 0;
+  else prevVelo = float(posdata[1][0] - posdata[0][0])/(posdata[1][1] - posdata[0][1]);
+  float accel = 1000*(velo - prevVelo)/(posdata[2][1] - posdata[0][1]);
+  vel_accel[0] = velo;
+  vel_accel[1] = accel;
+}
+
 /*********************************************************************************************************
-  END FILE
+  END FILE 
+    
 *********************************************************************************************************/
