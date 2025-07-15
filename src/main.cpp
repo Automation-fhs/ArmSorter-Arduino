@@ -10,29 +10,82 @@ bool home_err = false;
 bool isOpened = false;
 uint32_t sortTimer = 0;
 bool encCheck = false;
-long posdata[3][3] = {{0,-1},{0,-1},{0,-1}};
+long posdata[3][3] = {{0, -1}, {0, -1}, {0, -1}};
 float vel_accel[2];
 uint32_t lagTime;
 uint32_t homeStuck;
 long prevHomePulse;
-
+bool callibHome = false;
+bool callibOpen = false;
 bool enc_err_test;
 bool ard_err_test;
 
 uint32_t getLagTime(int control_signal);
 void velacc(long curPulse);
 
+bool homeSensor()
+{
+  return !digitalRead(Home_Sensor);
+}
+
+bool openSensor()
+{
+  return !digitalRead(Open_Sensor);
+}
+
+int checkEncoder(int curPulse)
+{
+
+  if (!openSensor() && !homeSensor())
+  {
+    return 100;
+  }
+
+  int errCode = 0;
+  if (curPulse < CallibOpen - 50 && !openSensor())
+  {
+    errCode = 1;
+  }
+  else if (curPulse > CallibOpen + 50 && openSensor())
+  {
+    errCode = 2;
+  }
+
+  if (curPulse > CallibHome + 50 && !homeSensor())
+  {
+    errCode += 20;
+  }
+  else if (curPulse < CallibHome - 50 && homeSensor())
+  {
+    errCode += 10;
+  }
+
+  return errCode;
+}
+
 void homeMode()
 {
   Serial.println("Finding Home");
-  if (digitalRead(Home_Sensor))
+  if (homeSensor())
   {
     analogWrite(Motor_Dir, 0);
     analogWrite(Motor_PWM, HomeSpeed);
-    while (digitalRead(Home_Sensor))
+    homeStuck = millis();
+    prevHomePulse = Motor1.getCurPulse();
+    int modifiedHomeSpeed = HomeSpeed;
+    while (homeSensor())
     {
       // Serial.println("Finding Home");
-      analogWrite(Motor_PWM, HomeSpeed);
+      if (prevHomePulse - Motor1.getCurPulse() > 1)
+      {
+        homeStuck = millis();
+      }
+      if (millis() - homeStuck >= 300)
+      {
+        modifiedHomeSpeed += 10;
+        homeStuck = millis();
+      }
+      analogWrite(Motor_PWM, modifiedHomeSpeed);
     }
     Motor1.setCurPulse(CallibHome);
     // Serial.println("Home found!");
@@ -41,7 +94,7 @@ void homeMode()
   {
     analogWrite(Motor_Dir, 255);
     analogWrite(Motor_PWM, HomeSpeed);
-    while (!digitalRead(Home_Sensor))
+    while (!homeSensor())
     {
       analogWrite(Motor_PWM, HomeSpeed);
     }
@@ -50,12 +103,14 @@ void homeMode()
     homeStuck = millis();
     prevHomePulse = Motor1.getCurPulse();
     int modifiedHomeSpeed = HomeSpeed;
-    while (digitalRead(Home_Sensor))
+    while (homeSensor())
     {
-      if(prevHomePulse - Motor1.getCurPulse() > 1) {
+      if (prevHomePulse - Motor1.getCurPulse() > 1)
+      {
         homeStuck = millis();
       }
-      if(millis() - homeStuck >= 500) {
+      if (millis() - homeStuck >= 300)
+      {
         modifiedHomeSpeed += 10;
         homeStuck = millis();
       }
@@ -70,17 +125,6 @@ void enc()
 {
   if (!enc_err_test)
     Motor1.upd_Pulse(digitalRead(Enc_A), digitalRead(Enc_B));
-  // bool cur_Home = digitalRead(Home_Sensor);
-  // uint32_t motorPos = Motor1.getCurPulse();
-  // if (prev_Home == 1 && !cur_Home && motorPos >= CallibHome - 100 && motorPos <= CallibHome + 100 && setpoint == HomeDegree)
-  // {
-  //   Motor1.setCurPulse(CallibHome);
-  //   Serial.println("Reset Home");
-  // };
-  // prev_Home = cur_Home;
-  // Serial.print(digitalRead(Enc_A));
-  // Serial.println(digitalRead(Enc_B));
-  // Serial.println(Motor1.getCurDeg());
 }
 
 void encoderCheck(int curSignal, int curPulse);
@@ -110,10 +154,9 @@ void pidCall()
   if (armed && !errState)
   {
     contrl_signl = Motor1.PID_pos_control(setpoint, TIMER1_INTERVAL_MS / 1000.0f);
-
-    // contrl_signl = (contrl_signl + 255) / 2;
-    // analogWrite(Motor_PWM, contrl_signl);
     float curDeg = Motor1.getCurDeg();
+
+    // Add more resistance to motor when exceeding open/home position
     if (curDeg >= openDeg + 3)
     {
       contrl_signl -= HomeSpeed;
@@ -122,30 +165,53 @@ void pidCall()
     {
       contrl_signl += HomeSpeed;
     }
-    if (setpoint == openDeg && newsetpoint == true && abs(Motor1.getCurDeg() - openDeg) <= 2.5 && contrl_signl <= HomeSpeed && !digitalRead(Home_Sensor))
+
+    // Check if arm is in open position but the sensor still triggered
+    // if (setpoint == openDeg && newsetpoint == true && abs(Motor1.getCurDeg() - openDeg) <= 2.5 && contrl_signl <= HomeSpeed && !digitalRead(Home_Sensor))
+    // {
+    //   Serial.println("Fault Open Position");
+    //   newsetpoint = false;
+    //   analogWrite(Motor_Dir, 255);
+    //   analogWrite(Motor_PWM, 0);
+    //   contrl_signl = 0;
+    //   armed = false;
+    //   home_err = true;
+    // }
+
+    // Check failed encoder // old method
+    // if (abs(contrl_signl) <= HomeSpeed + 50 || abs(Motor1.getCurPulse() - prev_pos) > 1)
+    // {
+    //   control_timer = millis();
+    //   lagTime = getLagTime(abs(contrl_signl));
+    // }
+    // else
+    // {
+    //   uint32_t newLagTime = getLagTime(abs(contrl_signl));
+    //   if (newLagTime < lagTime)
+    //   {
+    //     control_timer = millis();
+    //     lagTime = newLagTime;
+    //   }
+    // }
+    // if (millis() - control_timer >= getLagTime(abs(contrl_signl)))
+    // {
+    //   analogWrite(Motor_PWM, 0);
+    //   errState = true;
+    //   armed = false;
+    //   contrl_signl = 0;
+    //   analogWrite(Motor_PWM, 0);
+    //   Serial.println("Encoder Error!!");
+    // }
+
+    // Check failed encoder // new method
+
+    // TODO
+    // Measure Open Pulse
+    // Check Open sensor PIN
+
+    switch (checkEncoder(Motor1.getCurPulse()))
     {
-      Serial.println("Fault Home Position");
-      newsetpoint = false;
-      analogWrite(Motor_Dir, 255);
-      analogWrite(Motor_PWM, 0);
-      contrl_signl = 0;
-      armed = false;
-      home_err = true;
-    }
-    if (abs(contrl_signl) <= HomeSpeed + 50 || abs(Motor1.getCurPulse() - prev_pos) > 1)
-    {
-      control_timer = millis();
-      lagTime = getLagTime(abs(contrl_signl));
-    }
-    else {
-      uint32_t newLagTime = getLagTime(abs(contrl_signl));
-      if(newLagTime < lagTime) {
-        control_timer = millis();
-        lagTime = newLagTime;
-      }
-    }
-    
-    if (millis() - control_timer >= getLagTime(abs(contrl_signl)))
+    case 100: // out of sorting range
     {
       analogWrite(Motor_PWM, 0);
       errState = true;
@@ -153,20 +219,43 @@ void pidCall()
       contrl_signl = 0;
       analogWrite(Motor_PWM, 0);
       Serial.println("Encoder Error!!");
-      // analogWrite(Motor_PWM, 0);
-      // encCheck = true;
-      // encoderCheck(contrl_signl, Motor1.getCurPulse());
     }
-
-    // if(millis() - sortTimer >= 800 && millis() - sortTimer <= 1200 && Motor1.getCurPulse() >= 60)
-    // {
-    //   analogWrite(Motor_PWM, 0);
-    //   errState = true;
-    //   armed = false;
-    //   contrl_signl = 0;
-    //   analogWrite(Motor_PWM, 0);
-    //   Serial.println("Encoder Hard Error!!");
-    // }
+    break;
+    case 1:
+    {
+      // haven't open yet (keep open and recallib)
+      contrl_signl = 2 * HomeSpeed;
+      callibOpen = true;
+    }
+    break;
+    case 2:
+    {
+      analogWrite(Motor_PWM, 0);
+      errState = true;
+      armed = false;
+      contrl_signl = 0;
+      analogWrite(Motor_PWM, 0);
+      Serial.println("Encoder Error!!");
+    }
+    break;
+    case 11:
+    {
+      // haven't home yet (keep home and recallib)
+      contrl_signl = -2 * HomeSpeed;
+      callibHome = true;
+    }
+    break;
+    case 22:
+    {
+      analogWrite(Motor_PWM, 0);
+      errState = true;
+      armed = false;
+      contrl_signl = 0;
+      analogWrite(Motor_PWM, 0);
+      Serial.println("Encoder Error!!");
+    }
+    break;
+    }
 
     if (contrl_signl >= 0)
     {
@@ -190,7 +279,7 @@ void pidCall()
 
   if (home_err)
   {
-    if (!digitalRead(Home_Sensor))
+    if (!homeSensor())
     {
       analogWrite(Motor_Dir, 255);
       analogWrite(Motor_PWM, HomeSpeed);
@@ -211,7 +300,6 @@ void FuzzyCall()
   if (armed && !errState)
   {
     contrl_signl = Motor1.Fuzzy_pos_control(setpoint, TIMER1_INTERVAL_MS / 1000.0f);
-
 
     // contrl_signl = (contrl_signl + 255) / 2;
     // analogWrite(Motor_PWM, contrl_signl);
@@ -283,15 +371,22 @@ void enc_Z()
   // Motor1.setCurPulse(CallibZ);
 }
 
-void home()
+void reCallib()
 {
-  if (!digitalRead(Home_Sensor))
+  // if (!digitalRead(Home_Sensor))
+  // {
+  //   homeNR = millis();
+  //   homeNR_Flag = true;
+  // }
+  // else
+  //   homeNR_Flag = false;
+  if ((Motor1.getCurPulse() >= CallibHome - 100 && Motor1.getCurPulse() <= CallibHome + 100 || callibHome) && setpoint == HomeDegree)
   {
-    homeNR = millis();
-    homeNR_Flag = true;
+    Serial.print("Callib current pulse: ");
+    Serial.println(Motor1.getCurPulse());
+    Motor1.setCurPulse(CallibHome);
+    callibHome = false;
   }
-  else
-    homeNR_Flag = false;
 }
 
 void setup()
@@ -323,7 +418,7 @@ void setup()
   Motor1.enc_Init(digitalRead(Enc_A), digitalRead(Enc_B));
   attachInterrupt(digitalPinToInterrupt(Enc_A), enc, CHANGE);
   attachInterrupt(digitalPinToInterrupt(Enc_B), enc, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(Home_Sensor), home, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(Home_Sensor), reCallib, CHANGE);
 
   //------------------- Control Init ---------------------
   pinMode(PkgSensor, INPUT);
@@ -466,26 +561,39 @@ void loop()
     isHome = true;
     armed = true;
     setpoint = homeDeg;
-    prev_Home = digitalRead(Home_Sensor);
+    prev_Home = homeSensor();
     prev_setpoint = setpoint;
   }
-  if (homeNR_Flag && millis() - homeNR >= 50)
+  // if (homeNR_Flag && millis() - homeNR >= 5)
+  // {
+  //   // if (Motor1.getCurPulse() >= CallibHome - 100 && Motor1.getCurPulse() <= CallibHome + 100)
+  //   // {
+  //   //   Serial.print("Callib current pulse: ");
+  //   //   Serial.println(Motor1.getCurPulse());
+  //   //   Motor1.setCurPulse(CallibHome);
+  //   // }
+  //   Serial.print("Callib current pulse: ");
+  //   Serial.println(Motor1.getCurPulse());
+  //   Motor1.setCurPulse(CallibHome);
+  //   homeNR_Flag = false;
+  // }
+
+  if (callibOpen && setpoint == openDeg)
   {
-    if (Motor1.getCurPulse() >= CallibHome - 100 && Motor1.getCurPulse() <= CallibHome + 100)
-    {
-      Serial.print("Callib current pulse: ");
-      Serial.println(Motor1.getCurPulse());
-      Motor1.setCurPulse(CallibHome);
-    }
-    homeNR_Flag = false;
+    Serial.print("Callib current pulse: ");
+    Serial.println(Motor1.getCurPulse());
+    Motor1.setCurPulse(CallibOpen);
+    callibOpen = false;
   }
+
   if (test == false)
   {
     if (digitalRead(Control_Pin))
     {
       sTimer = millis();
       setpoint = homeDeg;
-      if(isOpened == true) {
+      if (isOpened == true)
+      {
         isOpened = false;
         sortTimer = millis();
       }
@@ -518,23 +626,29 @@ void loop()
   }
 }
 
-void encoderCheck(int curSignal, int curPulse) {
+void encoderCheck(int curSignal, int curPulse)
+{
   int testDir = -1;
-  if(curSignal >= 0) {
+  if (curSignal >= 0)
+  {
     testDir = 0;
   }
-  else {
+  else
+  {
     testDir = 1;
   }
   uint32_t startTime = millis();
 
-  while(encCheck) {
+  while (encCheck)
+  {
     analogWrite(Motor_Dir, testDir);
-    analogWrite(Motor_PWM, HomeSpeed+10);
-    if(abs(Motor1.getCurPulse() - curPulse) >= 3) {
+    analogWrite(Motor_PWM, HomeSpeed + 10);
+    if (abs(Motor1.getCurPulse() - curPulse) >= 3)
+    {
       encCheck = false;
     }
-    if(millis() - startTime >= 300) {
+    if (millis() - startTime >= 300)
+    {
       analogWrite(Motor_PWM, 0);
       errState = true;
       armed = false;
@@ -546,30 +660,19 @@ void encoderCheck(int curSignal, int curPulse) {
   }
 }
 
-uint32_t getLagTime(int control_signal) {
-  if(control_signal <= 60) return 300;
-  if(control_signal <= 120) return 250;
-  if(control_signal <= 200) return 200;
-  else return 150;
-}
-
-void velacc(long curPulse) {
-  posdata[0][0] = posdata[1][0];
-  posdata[0][1] = posdata[1][1];
-  posdata[1][0] = posdata[2][0];
-  posdata[1][1] = posdata[2][1];
-  posdata[2][0] = curPulse;
-  posdata[2][1] = millis();
-  float velo = float(posdata[2][0] - posdata[1][0])/(posdata[2][1] - posdata[1][1]);
-  float prevVelo;
-  if(posdata[0][1] == posdata[1][1]) prevVelo = 0;
-  else prevVelo = float(posdata[1][0] - posdata[0][0])/(posdata[1][1] - posdata[0][1]);
-  float accel = 1000*(velo - prevVelo)/(posdata[2][1] - posdata[0][1]);
-  vel_accel[0] = velo;
-  vel_accel[1] = accel;
+uint32_t getLagTime(int control_signal)
+{
+  if (control_signal <= 60)
+    return 300;
+  if (control_signal <= 120)
+    return 250;
+  if (control_signal <= 200)
+    return 200;
+  else
+    return 150;
 }
 
 /*********************************************************************************************************
-  END FILE 
-    
+  END FILE
+
 *********************************************************************************************************/
