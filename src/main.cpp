@@ -134,7 +134,12 @@ void pidCall()
   if (!errState && !ard_err_test)
   {
     // velacc(Motor1.getCurPulse());
-    Serial.println(Motor1.getCurPulse());
+    Serial.print(Motor1.getCurPulse());
+    Serial.print(" | ");
+    Serial.print(homeSensor());
+    Serial.print(" | ");
+    Serial.println(openSensor());
+
     // Serial.print(Motor1.getCurPulse());
     // Serial.print(" | ");
     // Serial.print(vel_accel[0]);
@@ -219,6 +224,7 @@ void pidCall()
       contrl_signl = 0;
       analogWrite(Motor_PWM, 0);
       Serial.println("Encoder Error!!");
+      Serial.println("Error: 100")
     }
     break;
     case 1:
@@ -226,6 +232,7 @@ void pidCall()
       // haven't open yet (keep open and recallib)
       contrl_signl = 2 * HomeSpeed;
       callibOpen = true;
+      Serial.println("Error: 1");
     }
     break;
     case 2:
@@ -235,7 +242,7 @@ void pidCall()
       armed = false;
       contrl_signl = 0;
       analogWrite(Motor_PWM, 0);
-      Serial.println("Encoder Error!!");
+      Serial.println("Error: 2");
     }
     break;
     case 11:
@@ -243,6 +250,7 @@ void pidCall()
       // haven't home yet (keep home and recallib)
       contrl_signl = -2 * HomeSpeed;
       callibHome = true;
+      Serial.println("Error:11");
     }
     break;
     case 22:
@@ -252,7 +260,7 @@ void pidCall()
       armed = false;
       contrl_signl = 0;
       analogWrite(Motor_PWM, 0);
-      Serial.println("Encoder Error!!");
+      Serial.println("Error: 22");
     }
     break;
     }
@@ -382,7 +390,7 @@ void reCallib()
   //   homeNR_Flag = false;
   if ((Motor1.getCurPulse() >= CallibHome - 100 && Motor1.getCurPulse() <= CallibHome + 100 || callibHome) && setpoint == HomeDegree)
   {
-    Serial.print("Callib current pulse: ");
+    Serial.print("Callib home current pulse: ");
     Serial.println(Motor1.getCurPulse());
     Motor1.setCurPulse(CallibHome);
     callibHome = false;
@@ -580,7 +588,7 @@ void loop()
 
   if (callibOpen && setpoint == openDeg)
   {
-    Serial.print("Callib current pulse: ");
+    Serial.print("Callib open current pulse: ");
     Serial.println(Motor1.getCurPulse());
     Motor1.setCurPulse(CallibOpen);
     callibOpen = false;
