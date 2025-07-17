@@ -19,13 +19,14 @@ bool callibHome = false;
 bool callibOpen = false;
 bool enc_err_test;
 bool ard_err_test;
+bool prepHomeCallib = false;
 
 uint32_t getLagTime(int control_signal);
 void velacc(long curPulse);
 
 bool homeSensor()
 {
-  return !digitalRead(Home_Sensor);
+  return digitalRead(Home_Sensor);
 }
 
 bool openSensor()
@@ -42,20 +43,20 @@ int checkEncoder(int curPulse)
   }
 
   int errCode = 0;
-  if (curPulse < CallibOpen - 50 && !openSensor())
+  if (curPulse < CallibOpen - 30 && !openSensor())
   {
     errCode = 1;
   }
-  else if (curPulse > CallibOpen + 50 && openSensor())
+  else if (curPulse > CallibOpen + 30 && openSensor())
   {
     errCode = 2;
   }
 
-  if (curPulse > CallibHome + 50 && !homeSensor())
+  if (curPulse > CallibHome + 30 && !homeSensor())
   {
     errCode += 20;
   }
-  else if (curPulse < CallibHome - 50 && homeSensor())
+  else if (curPulse < CallibHome - 30 && homeSensor())
   {
     errCode += 10;
   }
@@ -68,6 +69,7 @@ void homeMode()
   Serial.println("Finding Home");
   if (homeSensor())
   {
+    
     analogWrite(Motor_Dir, 0);
     analogWrite(Motor_PWM, HomeSpeed);
     homeStuck = millis();
@@ -139,19 +141,13 @@ void pidCall()
     Serial.print(homeSensor());
     Serial.print(" | ");
     Serial.println(openSensor());
-
-    // Serial.print(Motor1.getCurPulse());
-    // Serial.print(" | ");
-    // Serial.print(vel_accel[0]);
-    // Serial.print(" | ");
-    // Serial.println(vel_accel[1]);
-    analogWrite(NL_Pin, NL_Sgnl);
     // digitalWrite(NL_Pin, HIGH);
     if (NL_Sgnl > 255)
       NL_Sgnl = 0;
     else
       NL_Sgnl += 6;
   }
+  analogWrite(NL_Pin, NL_Sgnl);
 
   if (setpoint == homeDeg && newsetpoint == false)
     newsetpoint = true;
@@ -184,29 +180,29 @@ void pidCall()
     // }
 
     // Check failed encoder // old method
-    // if (abs(contrl_signl) <= HomeSpeed + 50 || abs(Motor1.getCurPulse() - prev_pos) > 1)
-    // {
-    //   control_timer = millis();
-    //   lagTime = getLagTime(abs(contrl_signl));
-    // }
-    // else
-    // {
-    //   uint32_t newLagTime = getLagTime(abs(contrl_signl));
-    //   if (newLagTime < lagTime)
-    //   {
-    //     control_timer = millis();
-    //     lagTime = newLagTime;
-    //   }
-    // }
-    // if (millis() - control_timer >= getLagTime(abs(contrl_signl)))
-    // {
-    //   analogWrite(Motor_PWM, 0);
-    //   errState = true;
-    //   armed = false;
-    //   contrl_signl = 0;
-    //   analogWrite(Motor_PWM, 0);
-    //   Serial.println("Encoder Error!!");
-    // }
+    if (abs(contrl_signl) <= HomeSpeed + 50 || abs(Motor1.getCurPulse() - prev_pos) > 1)
+    {
+      control_timer = millis();
+      lagTime = getLagTime(abs(contrl_signl));
+    }
+    else
+    {
+      uint32_t newLagTime = getLagTime(abs(contrl_signl));
+      if (newLagTime < lagTime)
+      {
+        control_timer = millis();
+        lagTime = newLagTime;
+      }
+    }
+    if (millis() - control_timer >= getLagTime(abs(contrl_signl)))
+    {
+      analogWrite(Motor_PWM, 0);
+      errState = true;
+      armed = false;
+      contrl_signl = 0;
+      analogWrite(Motor_PWM, 0);
+      Serial.println("Encoder Error!!");
+    }
 
     // Check failed encoder // new method
 
@@ -220,11 +216,12 @@ void pidCall()
     {
       analogWrite(Motor_PWM, 0);
       errState = true;
+      NL_Sgnl = 0;
       armed = false;
       contrl_signl = 0;
       analogWrite(Motor_PWM, 0);
       Serial.println("Encoder Error!!");
-      Serial.println("Error: 100")
+      Serial.println("Error: 100");
     }
     break;
     case 1:
@@ -239,10 +236,39 @@ void pidCall()
     {
       analogWrite(Motor_PWM, 0);
       errState = true;
+      NL_Sgnl = 0;
       armed = false;
       contrl_signl = 0;
       analogWrite(Motor_PWM, 0);
       Serial.println("Error: 2");
+    }
+    break;
+    case 10: {
+      // haven't home yet (keep home and recallib)
+      if(setpoint == HomeDegree) {
+        contrl_signl = -2 * HomeSpeed;
+      callibHome = true;
+      Serial.println("Error:10 Close");
+      }
+      else if(setpoint == OpenDegree) {
+        analogWrite(Motor_PWM, 0);
+      errState = true;
+      NL_Sgnl = 0;
+      armed = false;
+      contrl_signl = 0;
+      analogWrite(Motor_PWM, 0);
+        Serial.println("Error:10 Open");
+      }
+    }
+    break;
+    case 20: {
+      analogWrite(Motor_PWM, 0);
+      errState = true;
+      NL_Sgnl = 0;
+      armed = false;
+      contrl_signl = 0;
+      analogWrite(Motor_PWM, 0);
+      Serial.println("Error: 20");
     }
     break;
     case 11:
@@ -257,6 +283,7 @@ void pidCall()
     {
       analogWrite(Motor_PWM, 0);
       errState = true;
+      NL_Sgnl = 0;
       armed = false;
       contrl_signl = 0;
       analogWrite(Motor_PWM, 0);
@@ -426,7 +453,7 @@ void setup()
   Motor1.enc_Init(digitalRead(Enc_A), digitalRead(Enc_B));
   attachInterrupt(digitalPinToInterrupt(Enc_A), enc, CHANGE);
   attachInterrupt(digitalPinToInterrupt(Enc_B), enc, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(Home_Sensor), reCallib, CHANGE);
+  // attachInterrupt(digitalPinToInterrupt(Home_Sensor), reCallib, CHANGE);
 
   //------------------- Control Init ---------------------
   pinMode(PkgSensor, INPUT);
@@ -594,6 +621,19 @@ void loop()
     callibOpen = false;
   }
 
+  if(!homeSensor()){
+    prepHomeCallib = true;
+  }
+
+  if ((Motor1.getCurPulse() >= CallibHome - 50 && Motor1.getCurPulse() <= callibHome + 50 || callibHome) && setpoint == HomeDegree && prepHomeCallib && homeSensor())
+  {
+    Serial.print("Callib home current pulse: ");
+    Serial.println(Motor1.getCurPulse());
+    Motor1.setCurPulse(CallibHome);
+    callibHome = false;
+    prepHomeCallib = false;
+  }
+
   if (test == false)
   {
     if (digitalRead(Control_Pin))
@@ -671,13 +711,13 @@ void encoderCheck(int curSignal, int curPulse)
 uint32_t getLagTime(int control_signal)
 {
   if (control_signal <= 60)
-    return 300;
+    return 500;
   if (control_signal <= 120)
-    return 250;
+    return 400;
   if (control_signal <= 200)
-    return 200;
+    return 350;
   else
-    return 150;
+    return 300;
 }
 
 /*********************************************************************************************************

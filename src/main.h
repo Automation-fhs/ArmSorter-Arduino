@@ -33,8 +33,8 @@
 #define Enc_A 21
 #define Enc_B 20
 #define Enc_Z 19
-#define Home_Sensor 18
-#define Open_Sensor 22 // ?????
+#define Home_Sensor 27
+#define Open_Sensor 18 // ?????
 // #define Open_Offset_Mode 27
 // #define Home_Offset_Mode 29
 // #define OffsetConfirm 31
@@ -46,8 +46,8 @@
 #define Spare_BTN 40
 #define NL_Pin 2
 
-#define CallibHome 50
-#define CallibOpen 400
+#define CallibHome 80
+#define CallibOpen 395
 #define CallibZ 200
 #define HomeSpeed 30
 #define Home_Offset_Addr 0
