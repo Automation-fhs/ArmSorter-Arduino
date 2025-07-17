@@ -69,7 +69,7 @@ void homeMode()
   Serial.println("Finding Home");
   if (homeSensor())
   {
-    
+
     analogWrite(Motor_Dir, 0);
     analogWrite(Motor_PWM, HomeSpeed);
     homeStuck = millis();
@@ -142,10 +142,7 @@ void pidCall()
     Serial.print(" | ");
     Serial.println(openSensor());
     // digitalWrite(NL_Pin, HIGH);
-    if (NL_Sgnl > 255)
-      NL_Sgnl = 0;
-    else
-      NL_Sgnl += 6;
+    NL_Sgnl = 255 - NL_Sgnl;
   }
   analogWrite(NL_Pin, NL_Sgnl);
 
@@ -243,25 +240,29 @@ void pidCall()
       Serial.println("Error: 2");
     }
     break;
-    case 10: {
+    case 10:
+    {
       // haven't home yet (keep home and recallib)
-      if(setpoint == HomeDegree) {
+      if (setpoint == HomeDegree)
+      {
         contrl_signl = -2 * HomeSpeed;
-      callibHome = true;
-      Serial.println("Error:10 Close");
+        callibHome = true;
+        Serial.println("Error:10 Close");
       }
-      else if(setpoint == OpenDegree) {
+      else if (setpoint == OpenDegree)
+      {
         analogWrite(Motor_PWM, 0);
-      errState = true;
-      NL_Sgnl = 0;
-      armed = false;
-      contrl_signl = 0;
-      analogWrite(Motor_PWM, 0);
+        errState = true;
+        NL_Sgnl = 0;
+        armed = false;
+        contrl_signl = 0;
+        analogWrite(Motor_PWM, 0);
         Serial.println("Error:10 Open");
       }
     }
     break;
-    case 20: {
+    case 20:
+    {
       analogWrite(Motor_PWM, 0);
       errState = true;
       NL_Sgnl = 0;
@@ -621,7 +622,8 @@ void loop()
     callibOpen = false;
   }
 
-  if(!homeSensor()){
+  if (!homeSensor())
+  {
     prepHomeCallib = true;
   }
 

@@ -61,7 +61,7 @@ MotorControl Motor1 = MotorControl(Motor_Voltage, Enc_PPP);
 
 String enc_type = "AB";
 int cur_P = 0;
-int NL_Sgnl;
+int NL_Sgnl = 0;
 
 // ----- Motor -----
 // float PID[3] = {0.6, 0.2, 0.26};
